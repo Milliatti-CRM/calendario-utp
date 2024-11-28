@@ -1,0 +1,2931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário Interativo com Campanhas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #d0d0d0;
+        }
+
+        .campaign-utp {
+            background-color: #1f0a9a;
+            color: white;
+        }
+
+        .campaign-clubegiro {
+            background-color: #4593d4;
+            color: white;
+        }
+
+        .faded {
+            color: #d3d3d3;
+        }
+
+        /* Ajuste do tamanho do calendário */
+        #calendar {
+            width: 95%;
+            margin: 0 auto;
+        }
+
+        /* Garantir que as colunas tenham altura e largura iguais */
+        .day-col {
+            height: 80px;
+            position: relative;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #ccc;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .day-number {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-weight: bold;
+            font-size: 12px;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 2px;
+            border-radius: 3px;
+        }
+
+        .campaign-name {
+            position: relative;
+            font-size: 10px;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-left: 5px;
+            margin-top: 2px;
+            color: white;
+        }
+
+        .comment-section {
+            margin-top: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            width: 95%;
+            margin: 10px auto 0 auto;
+        }
+
+        .campaign {
+            margin-bottom: 10px;
+        }
+
+        /* Ajuste do tamanho da fonte na seção de detalhes */
+        .campaign-box {
+            font-size: 12px;
+        }
+
+        /* Remover espaçamento entre as colunas */
+        .no-gutters [class*='col'] {
+            padding-right: 0;
+            padding-left: 0;
+        }
+
+        /* Ajustar margens das linhas */
+        .no-gutters {
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+        /* Remover margem e padding do card */
+        .card {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Ajuste para centralizar o conteúdo */
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Ajuste para o cabeçalho do calendário */
+        .card-header {
+            width: 100%;
+            padding: 5px;
+        }
+
+        /* Ajuste para o título do mês */
+        #monthLabel {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        /* Estilo para o tipo de campanha */
+        .campaign-detail .tipo-campanha {
+            font-style: italic;
+        }
+
+        /* Ajuste para o accordion */
+        .accordion-button {
+            font-size: 14px;
+        }
+
+        .accordion-item {
+            border: none;
+        }
+
+        /* Cores mais claras para as campanhas */
+        .campaign-box-utp {
+            background-color: #d9d0f4;
+            /* Tom mais claro da cor UTP */
+        }
+
+        .campaign-box-clubegiro {
+            background-color: #d0e6f7;
+            /* Tom mais claro da cor Clube Giro */
+        }
+
+        /* Ajustes para telas menores */
+        @media (max-width: 768px) {
+            .day-col {
+                height: 60px;
+            }
+
+            .day-number {
+                font-size: 10px;
+            }
+
+            .campaign-name {
+                font-size: 8px;
+                margin-top: 15px;
+            }
+
+            #monthLabel {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body style="padding: 10px;">
+    <div class="container">
+        <div id="main-content">
+            <!-- Calendário -->
+            <div id="calendar">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <select id="monthSelect" class="form-select d-inline w-auto"></select>
+                            <select id="yearSelect" class="form-select d-inline w-auto"></select>
+                            <select id="brandSelect" class="form-select d-inline w-auto">
+                                <option value="all">Todas as marcas</option>
+                                <option value="UTP">UTP</option>
+                                <option value="Clube Giro">Clube Giro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button id="prev" class="btn btn-sm btn-outline-primary">◀</button>
+                            <button id="next" class="btn btn-sm btn-outline-primary">▶</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h2 id="monthLabel" class="text-center mb-2"></h2>
+                        <div class="row text-center fw-bold">
+                            <div class="col">Dom</div>
+                            <div class="col">Seg</div>
+                            <div class="col">Ter</div>
+                            <div class="col">Qua</div>
+                            <div class="col">Qui</div>
+                            <div class="col">Sex</div>
+                            <div class="col">Sáb</div>
+                        </div>
+                        <div id="days" class="text-center no-gutters"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalhes das Campanhas -->
+            <div id="campaign-details" class="comment-section">
+                <h5>Detalhes das Campanhas</h5>
+                <div id="campaigns-list" class="accordion"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inclua as dependências do Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+    <script>
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro",
+            "Outubro", "Novembro", "Dezembro"];
+
+        // Atualiza a data atual para o mês e ano atuais
+        let currentDate = new Date(); // Inicia com a data atual
+
+        // Dados das campanhas com IDs e novos campos
+        const campaignsData = [
+        {
+                id: "campaign-1",
+                name: "Dia da mulher",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "08/03/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "Relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/03/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-2",
+                name: "Ação Reativação Rio-SP",
+                discount: "até 90% de desconto",
+                routes: "Rio x São Paulo",
+                salesPeriod: "09/03/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/03/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-3",
+                name: "Dia do consumidor UTP",
+                discount: "20% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "14/03/2022 à 16/03/2022",
+                travelPeriod: "18/03/2022 à 31/03/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/03/2022 à 16/03/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-4",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "até 50% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "29/03/2022 e 30/03/2022",
+                travelPeriod: "01/04/2022 à 30/04/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "29/03/2022 e 30/03/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-5",
+                name: "ANIV CATARINENSE",
+                discount: "20% de desconto",
+                routes: "rotas da Catarinense",
+                salesPeriod: "13/04/2022",
+                travelPeriod: "24/04/2022 à 31/05/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/04/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-6",
+                name: "PROMO ANTECIPAÇÃO",
+                discount: "20% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "20/04/2022 à 24/04/2022",
+                travelPeriod: "01/05/2022 à 10/06/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "20/04/2022 à 24/04/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-7",
+                name: "ANIV COMETA",
+                discount: "20% de desconto",
+                routes: "rotas Cometa",
+                salesPeriod: "07/05/2022",
+                travelPeriod: "16/05/2022 à 31/05/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "07/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-8",
+                name: "Mês das Mães UTP",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-9",
+                name: "Incentivo Rock in Rio",
+                discount: "não aplicável",
+                routes: "rotas Rio",
+                salesPeriod: "à partir de 27/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "à partir de 27/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-10",
+                name: "JOÃO ROCK",
+                discount: "não aplicável",
+                routes: "rotas Ribeirão Preto",
+                salesPeriod: "01/06/2022 à 03/06/2022",
+                travelPeriod: "11/06/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/06/2022 à 03/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-11",
+                name: "DIA DOS NAMORADOS (UTP)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "06/06/2022 à 12/06/2022",
+                travelPeriod: "20/06/2022 à 20/07/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/06/2022 à 12/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-12",
+                name: "Catarinense - Guaramirim",
+                discount: "não aplicável",
+                routes: " Jaraguá do Sul, Curitiba, Joinville, Navegantes e Florianópolis",
+                salesPeriod: "18/06/2022 e 19/06/2022",
+                travelPeriod: "18/06/2022 e 19/06/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "18/06/2022 e 19/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-13",
+                name: "Campanha ADS  Regional RIO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "09/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-14",
+                name: "Serviço  VAI DIRETO (CAMPOS)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "10/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "10/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-15",
+                name: "Ação de Retomada de Rotas  (AVC Internacional)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "12/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "12/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-16",
+                name: "Madrugada de ofertas /Corugiro",
+                discount: "não aplicável",
+                routes: "50% de desconto em rotas selecionadas",
+                salesPeriod: "17/05/2022 e 18/05/2022",
+                travelPeriod: "01/06/2022 à 30/06/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "17/05/2022 e 18/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-17",
+                name: "Divulgar rotas (SÃO x MGA) Novos Horários",
+                discount: "não aplicável",
+                routes: "São Paulo e Maringá",
+                salesPeriod: "19/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "19/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-18",
+                name: "Floripa x São Leopoldo (via POA)",
+                discount: "não aplicável",
+                routes: "Florianópolis e São Leopoldo",
+                salesPeriod: "20/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "20/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-19",
+                name: "(Teaser) Vem ai! VAI DIRETO (RIO X MAC)",
+                discount: "não aplicável",
+                routes: "Rio de Janeiro e Macaé",
+                salesPeriod: "26/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "26/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-20",
+                name: "Serviço  VAI DIRETO (Floripa x São Paulo)",
+                discount: "não aplicável",
+                routes: "Florianópolis e São Paulo",
+                salesPeriod: "31/05/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "31/05/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-21",
+                name: "Parada do Amor",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "16/06/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "16/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-22",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "21/06/2022 e 22/06/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "21/06/2022 e 22/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-23",
+                name: "Antecipação férias de julho (UTP - mar aberto)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "27/06/2022, 28/06/2022 e 29/06/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/06/2022, 28/06/2022 e 29/06/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-24",
+                name: "Ação de reativação de clientes inativos (reativação via cupom)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "06/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-25",
+                name: "DIA DO CHOCOLATE",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "07/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "07/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-26",
+                name: "Serviços VAI DIRETO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "08/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+
+{
+                id: "campaign-27",
+                name: "DIA DA PIZZA",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "10/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "10/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-28",
+                name: "Rota SAO-MGA - novos horários",
+                discount: "não aplicável",
+                routes: "São Paulo e Maringá",
+                salesPeriod: "13/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-29",
+                name: "DIA DO ROCK (ROCK IN RIO)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "13/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-30",
+                name: "Divulgar serviços cama VCOM / 1001 / Catarinense / Expresso",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "22/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "22/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-31",
+                name: "DIA DO MOTORISTA",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "25/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "25/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-32",
+                name: "DIA DOS AVÓS",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "26/07/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "26/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-33",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "26/07/2022 e 27/07/2022",
+                travelPeriod: "15/08/2022 à 31/08/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "26/07/2022 e 27/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-34",
+                name: "Aniversário da 1001",
+                discount: "20% de desconto",
+                routes: "Todas",
+                salesPeriod: "29/07/2022",
+                travelPeriod: "01/08/2022 à 31/08/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "29/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-35",
+                name: "Parceria Instituto Luisa Mell",
+                discount: "10% de desconto",
+                routes: "Todas rotas da Cometa",
+                salesPeriod: "30/07/2022 e 31/07/2022",
+                travelPeriod: "01/08/2022 à 31/08/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "30/07/2022 e 31/07/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-36",
+                name: "REFORÇO INCENTIVO DE ROTA ROCK IN RIO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "01/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-37",
+                name: "INCENTIVO DE ROTA UTP - FESTIVAL GASTRONÔMICO - 1001",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "02/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "02/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-38",
+                name: "INCENTIVO DE ROTA UTP - PARADA LGBTQIA+ (FLORIPA/ RIO)",
+                discount: "não aplicável",
+                routes: "Florianópolis e Rio de Janeiro",
+                salesPeriod: "04/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-39",
+                name: "INCENTIVO DE ROTA UTP - SHOWS INTERNACIONAIS - UTP IRON MAIDEN",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "04/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-40",
+                name: "DIA DO IRMÃO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-41",
+                name: "INCENTIVO DE ROTA - FERIADO ANIVERSÁRIO DA PADROEIRA - Curitiba (CAT E COM)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-42",
+                name: "INCENTIVO DE ROTA UTP  - OKTOBERFEST (CAT)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "08/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-43",
+                name: "SEMANA FARROPILHA - Feriado Rio Grande do Sul (CAT)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "09/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-44",
+                name: "INCENTIVO DE ROTA UTP  - FESTIVAL PLANETA BRASIL - BH (Cometa)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "13/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-45",
+                name: "INCENTIVO DE ROTA UTP  - SHOWS INTERNACIONAIS - JUSTIN BIEBER - SP (Cometa)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "14/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-46",
+                name: "INCENTIVO DE ROTA UTP  - FINAL FESTIVAL DE SAQUAREMA (1001)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "19/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "19/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-47",
+                name: "INCENTIVO DE ROTA UTP  - SHOWS INTERNACIONAIS - GUNS N ROSES - SP (Cometa)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "24/09/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "24/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-48",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "27/09/2022 à 28/09/2022",
+                travelPeriod: "01/10/2022 à 31/10/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/09/2022 à 28/09/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-49",
+                name: "TRABALHAR CAMPANHA DE LINHAS CURTAS PRÉ-FERIADO UTP",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "04/10/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-50",
+                name: "DIA DE APARECIDA - INCENTIVO DE ROTA DE APARECIDA",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/10/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-51",
+                name: "BRASIL GAME SHOW - MAIOR FEIRA DE GAMES",
+                discount: "não aplicável",
+                routes: "todas que ligam Aparecida",
+                salesPeriod: "06/10/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-52",
+                name: "REATIVAÇÃO DE BASE - UTP",
+                discount: "80% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "21/10/2022",
+                travelPeriod: "21/10/2022 à 30/11/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "21/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-53",
+                name: "Campanha com foco em Cruzeiros",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "24/10/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "24/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-54",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "25/10/2022 à 26/10/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "25/10/2022 à 26/10/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-55",
+                name: "ANIVERSÁRIO DAS CIDADES DO MÊS - UTP",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "01/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-56",
+                name: "CAMPANHAS ROTAS CURTAS (Todas as marcas)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "01/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-57",
+                name: "CAMPANHA INCENTIVO PRÉ-FERIADO - ANTECIPAÇÃO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "03/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "03/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-58",
+                name: "INCENTIVO SOROCABA X GUARULHOS",
+                discount: "não aplicável",
+                routes: "Sorocaba x Guarulhos",
+                salesPeriod: "07/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "07/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-59",
+                name: "Reativação de base - UTP",
+                discount: "80% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "08/11/2022",
+                travelPeriod: "08/11/2022 à 30/11/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-60",
+                name: "CAMPANHA INCENTIVO PARA ARARAQUARA - ATRIBUTO DE MARCA (Cometa)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "10/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "10/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-61",
+                name: "PATROCÍNIO ANGELA BRITTO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "14/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-62",
+                name: "CAMPANHA INCENTIVO ESTRATÉGICA POR MARCA",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "17/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "17/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-63",
+                name: "CAMPANHA INCENTIVO PARA FRANCA (Cometa)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "23/11/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "23/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-64",
+                name: "MADRUGADA DE OFERTAS/ CORUGIRO",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "29/11/2022 e 30/11/2022",
+                travelPeriod: "02/12/2022 à 15/12/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "29/11/2022 e 30/11/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-65",
+                name: "ANIVERSÁRIO DAS CIDADES DO MÊS",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "01/12/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-66",
+                name: "Divulgação evento de adoção Luisa Mel",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "02/12/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "02/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-67",
+                name: "SHOW DO HARRY STYLES (Campanha de shows internacionais)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/12/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-68",
+                name: "INCENTIVO SOROCABA X RIO DE JANEIRO",
+                discount: "não aplicável",
+                routes: "Sorocaba x Rio de Janeiro",
+                salesPeriod: "08/12/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-69",
+                name: "REATIVAÇÃO DE BASE (80% DE DESCONTO)",
+                discount: "80% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "08/12/2022",
+                travelPeriod: "05/01/2023 à 14/02/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-70",
+                name: "MADRUGADA DE OFERTAS/ CORUGIRO",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "13/12/2022 e 14/12/2022",
+                travelPeriod: "05/01/2023 à 14/02/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/12/2022 e 14/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-71",
+                name: "ROTAS DE FAMILIA PARA CURTIR FESTAS DE FIM DE ANO (UTP) / + ROTAS CURTAS",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "22/12/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "22/12/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-72",
+                name: "Divulgar rotas Norte PR",
+                discount: "não aplicável",
+                routes: "Ponta Grossa, Guarapuava, Londrina, Maringá e Foz do Iguaçu",
+                salesPeriod: "03/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "03/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-73",
+                name: "Ação de reativação de clientes inativos (reativação via cupom)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-74",
+                name: "Dia do Estudante",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "11/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "11/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-75",
+                name: "Mês dos Pais",
+                discount: "30% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "08/08/2022 à 11/08/2022",
+                travelPeriod: "15/08/2022 à 31/08/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/08/2022 à 11/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-76",
+                name: "EVENTO HOPI-HARI",
+                discount: "não aplicável",
+                routes: "São Paulo e Campinas",
+                salesPeriod: "12/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "12/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-77",
+                name: "Divulgar rotas interior de SP",
+                discount: "não aplicável",
+                routes: "Campinas, São José do Rio Preto, São Paulo e Araraquara",
+                salesPeriod: "18/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "18/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-78",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "23/08/2022 e 24/08/2022",
+                travelPeriod: "01/08/2022 à 30/09/2022",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "23/08/2022 e 24/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-79",
+                name: "Divulgar Serviços Cama",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "25/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "25/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-80",
+                name: "INCENTIVO ROCK IN RIO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "26/08/2022",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "26/08/2022",
+                peculiarity: "Não Aplicável",
+                revenue: "R$ 0,00 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "Não Aplicável",
+                kpis: "Taxa de abertura - 0001 aberturas (xx,xx%) | Taxa de Clique - 0001 cliques (x,xx%) | Taxa de descadastro - 0001 (x,xx%)"
+            },
+{
+                id: "campaign-81",
+                name: "ATENDIMENTO WHATSAPP",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "10/01/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "10/01/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 28.370 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 18,57% | Taxa de Clique - 0,29% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-82",
+                name: "MADRUGADA DE OFERTAS/ CORUGIRO",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "17/01/2023 à 18/01/2023",
+                travelPeriod: "27/01/2023 à 15/02/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "17/01/2023 à 18/01/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 70.680 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,24% | Taxa de Clique - 0,88% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-83",
+                name: "DIA DA SAUDADE",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "30/01/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "30/01/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 10.650 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 18,79% | Taxa de Clique - 0,33% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-84",
+                name: "MADRUGADA DE OFERTAS/CORUGIRO",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "14/02/2023 à 15/02/2023",
+                travelPeriod: "27/02/2023 à 31/03/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/02/2023 à 15/02/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 85.000 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,30% | Taxa de Clique - 0,63% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-85",
+                name: "LIQUIDABUS",
+                discount: "50% de desconto",
+                routes: "não aplicável",
+                salesPeriod: "24/02/2023 à 28/02/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "24/02/2023 à 28/02/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 351.750 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 17,79% | Taxa de Clique - 0,86% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-86",
+                name: "VOLTA ÀS AULAS",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "27/02/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/02/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 5.750 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 16,82% | Taxa de Clique - 0,17% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-87",
+                name: "ANTECIPAÇÃO ADVP LONGO",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "06/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 32.090 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 19,32% | Taxa de Clique - 0,37% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-88",
+                name: "BPE",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "07/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "07/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 44.450 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 22,86% | Taxa de Clique - 0,34% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-89",
+                name: "Dia das Mulheres",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "08/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 21.410 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 14,95% | Taxa de Clique - 0,09% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-90",
+                name: "Dia dos Animais",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "14/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 13.990 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,40% | Taxa de Clique - 0,51% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-91",
+                name: "Dia do Consumidor",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "15/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "15/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 34.200 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,01% | Taxa de Clique - 0,30% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-92",
+                name: "Madrugada de Ofertas/ Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "21/03/2023 e 22/03/2023",
+                travelPeriod: "01/04/2023 a 27/04/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "21/03/2023 e 22/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 120.770 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 16,01% | Taxa de Clique - 0,65% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-93",
+                name: "Novo site",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "24/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "24/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 144,97 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 32,07% | Taxa de Clique - 1,02% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-94",
+                name: "Novo Rota",
+                discount: "não aplicável",
+                routes: "Poços de Caldas e Guarulhos",
+                salesPeriod: "27/03/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/03/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 6.760 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 31,57% | Taxa de Clique - 0,18% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-95",
+                name: "Dia do Amigo",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "18/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "18/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 0 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,44% | Taxa de Clique - 0,42% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-96",
+                name: "Novo site",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "19/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "19/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 7.920 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 24,26% | Taxa de Clique - 0,93% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-97",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "25/04/2023 e 26/04/2023",
+                travelPeriod: "03/05/2023 à 31/05/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "25/04/2023 e 26/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 94.780 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 12,93% | Taxa de Clique - 0,55% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-98",
+                name: "Páscoa",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "09/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 9.460 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 18,86% | Taxa de Clique - 0,18% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-99",
+                name: "Pós Páscoa",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "11/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "11/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 31.920 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 19,02% | Taxa de Clique - 0,30% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-100",
+                name: "Dia da mentira",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "01/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 19.220 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 16,08% | Taxa de Clique - 0,18% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-101",
+                name: "Incentivo de rotas curtas",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "04/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 11.320 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 24,59% | Taxa de Clique - 0,55% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-101",
+                name: "Incentivo de rotas curtas",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "17/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "17/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 11.900 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 24,19% | Taxa de Clique - 0,49% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-102",
+                name: "Incentivo de rotas curtas",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "27/04/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/04/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 26.470 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 22,91% | Taxa de Clique - 0,40% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-103",
+                name: "Dia das mães - (Pré-Optout)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "03/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "03/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 3.900 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,90% | Taxa de Clique - 0,20% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-104",
+                name: "Reativação de base",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "05/05/2023 à 07/05/2023",
+                travelPeriod: "15/05/2023 à 12/06/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/05/2023 à 07/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 65.870 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 10,30% | Taxa de Clique - 0,34% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-105",
+                name: "Aniversário Cometa/ Dia Mundial do riso",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "07/05/2023 e 08/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "07/05/2023 e 08/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 79.720 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 11,90% | Taxa de Clique - 0,66% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-106",
+                name: "Aniversário Rápido Ribeirão/ Dia Mundial do riso",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "08/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "08/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 5.930 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 24,18% | Taxa de Clique - 1,99% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-107",
+                name: "Madrugada de ofertas / Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "09/05/2023 e 10/05/2023",
+                travelPeriod: "13/05/2023 à 10/06/2023",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/05/2023 e 10/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 122.550 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,06% | Taxa de Clique - 0,46% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-108",
+                name: "Dia das mães",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "14/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 11.400 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 12,00% | Taxa de Clique - 0,17% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-109",
+                name: "Dia da família",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "15/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "15/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 16.870 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,68% | Taxa de Clique - 0,16% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-110",
+                name: "Dia internacional contra a homofobia",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "17/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "17/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 4.810 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,23% | Taxa de Clique - 0,10% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-111",
+                name: "Corpus Christi",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "25/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "25/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 31.950 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 16,18% | Taxa de Clique - 0,21% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-112",
+                name: "Só hoje / Liquidabus",
+                discount: "50% de desconto",
+                routes: "site todo",
+                salesPeriod: "31/05/2023",
+                travelPeriod: "07/06/2023 à 31/08/2023",
+                coupon: "LIQUIDA50",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "31/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 141.810 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 12,08% | Taxa de Clique - 0,39% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-113",
+                name: "Nova rota",
+                discount: "não aplicável",
+                routes: "Franca e Praia Grande",
+                salesPeriod: "04/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 0 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 30,40% | Taxa de Clique - 0,15% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-114",
+                name: "Incentivo de rota - São Paulo x Rio de Janeiro",
+                discount: "não aplicável",
+                routes: "São Paulo e Rio de Janeiro",
+                salesPeriod: "24/05/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "24/05/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 8.090 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 16,22% | Taxa de Clique - 0,55% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-115",
+                name: "Pré Parada do Orgulho LGBT",
+                discount: "30% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "01/06/2023 e 02/06/2023",
+                travelPeriod: "09/06/2023 à 11/06/2023",
+                coupon: "PARADA30",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "01/06/2023 e 02/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 3.370 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 11,94% | Taxa de Clique - 0,09% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-116",
+                name: "Campanha ADVP - Dias dos Namorados",
+                discount: "20% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "06/06/2023 e 07/06/2023",
+                travelPeriod: "10/06/2023 à 12/06/2023",
+                coupon: "AMOR20OFF",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/06/2023 e 07/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 4.820 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 10,32% | Taxa de Clique - 0,10% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-117",
+                name: "Reativação de base",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "09/06/2023 à 11/06/2023",
+                travelPeriod: "16/06/2023 à 31/07/2023",
+                coupon: "EUMGN50OFF",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "09/06/2023 à 11/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 26.520 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 10,48% | Taxa de Clique - 0,37% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-118",
+                name: "Rotas Românticas",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "12/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "12/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 3.980 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 18,48% | Taxa de Clique - 0,15% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-119",
+                name: "Dia do Turista",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "13/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "13/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 18.560 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 14,82% | Taxa de Clique - 0,16% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-120",
+                name: "Rotas de Inverno",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "14/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "14/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 0 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,18% | Taxa de Clique - 0,19% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-121",
+                name: "Madrugada de ofertas/ Corugiro",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "20/06/2023 e 21/06/2023",
+                travelPeriod: "26/06/2023 à 31/07/2023",
+                coupon: "PROMO50OFF",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "20/06/2023 e 21/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 88.970 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 12,12% | Taxa de Clique - 0,55% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-122",
+                name: "Parceria ODH",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "23/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "23/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 0 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 9,71% | Taxa de Clique - 0,13% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-123",
+                name: "Incentivo poltrona cama",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "26/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "26/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 13.040 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,66% | Taxa de Clique - 0,35% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-124",
+                name: "Incentivo de rota - São Paulo x Rio de Janeiro (direto)",
+                discount: "não aplicável",
+                routes: "São Paulo e Rio de Janeiro",
+                salesPeriod: "27/06/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "27/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 641,68 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,76% | Taxa de Clique - 0,43% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-125",
+                name: "Liquidabus",
+                discount: "50% de desconto",
+                routes: "Site todo, exceto Catarinense",
+                salesPeriod: "29/06/2023 e 30/06/2023",
+                travelPeriod: "06/07/2023 à 30/09/2022",
+                coupon: "FERIAS50",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "29/06/2023 e 30/06/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 114.450 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 13,80% | Taxa de Clique - 0,47% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-126",
+                name: "Cidades aniversariantes",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "03/07/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "03/07/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 6.910 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 14,82% | Taxa de Clique - 0,11% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-127",
+                name: "Vendas pelo WhatsApp",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "04/07/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "relacionamento",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "04/07/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 7.870 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 14,01% | Taxa de Clique - 0,10% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-128",
+                name: "A partir de: (Férias em família)",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "05/07/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "05/07/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 18.120 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 15,09% | Taxa de Clique - 0,25% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-129",
+                name: "Reativação de base",
+                discount: "50% de desconto em rotas selecionadas",
+                routes: "não aplicável",
+                salesPeriod: "06/07/2023 á 09/07/2023",
+                travelPeriod: "16/07/2023 á 31/08/2023",
+                coupon: "XVB-50OF",
+                brand: "UTP",
+                type: "oferta",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "06/07/2023 á 09/07/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 108.950 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 8,08% | Taxa de Clique - 0,33% | Taxa de descadastro - 0,00%"
+            },
+{
+                id: "campaign-130",
+                name: "Nova rota - Maricá",
+                discount: "não aplicável",
+                routes: "não aplicável",
+                salesPeriod: "10/07/2023",
+                travelPeriod: "não aplicável",
+                coupon: "não aplicável",
+                brand: "UTP",
+                type: "incentivo de rota",
+                color: "#1f0a9a",
+                lightColor: "#d9d0f4",
+                dataCampanha: "10/07/2023",
+                peculiarity: "não aplicável",
+                revenue: "R$ 6.830 (CRM) | R$ 0,00 (Performance) | R$ 0,00 (Orgânico) | R$ 0,00 (Social)",
+                agency: "não aplicável",
+                kpis: "Taxa de abertura - 20,17% | Taxa de Clique - 0,18% | Taxa de descadastro - 0,00%"
+            }
+        ];
+
+        // Função para converter a string de datas em um array de objetos Date
+        function parseDates(dateStr) {
+            let dates = [];
+            if (dateStr && dateStr !== "Não aplicável") {
+                // Primeiro, separar por "e" para múltiplas datas ou intervalos
+                let dateParts = dateStr.split("e");
+                dateParts.forEach(part => {
+                    part = part.trim();
+                    // Verificar se é um intervalo de datas com "à"
+                    if (part.includes("à")) {
+                        let rangeParts = part.split("à").map(p => p.trim());
+                        if (rangeParts.length === 2) {
+                            let startDate = parseSingleDate(rangeParts[0]);
+                            let endDate = parseSingleDate(rangeParts[1]);
+                            if (startDate && endDate) {
+                                // Gerar todas as datas no intervalo
+                                let currentDate = new Date(startDate);
+                                while (currentDate <= endDate) {
+                                    dates.push(new Date(currentDate));
+                                    currentDate.setDate(currentDate.getDate() + 1);
+                                }
+                            }
+                        }
+                    } else {
+                        // Tentar parsear como data única
+                        let singleDate = parseSingleDate(part);
+                        if (singleDate) {
+                            dates.push(singleDate);
+                        }
+                    }
+                });
+            }
+            return dates;
+        }
+
+        function parseSingleDate(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]) - 1; // Meses em JavaScript começam em zero
+                const year = parseInt(parts[2]);
+                return new Date(year, month, day);
+            }
+            return null;
+        }
+
+        // Popula os dropdowns de mês e ano
+        const monthSelect = document.getElementById("monthSelect");
+        const yearSelect = document.getElementById("yearSelect");
+        const brandSelect = document.getElementById("brandSelect");
+
+        for (let i = 0; i < monthNames.length; i++) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = monthNames[i];
+            monthSelect.appendChild(option);
+        }
+
+        for (let i = 2020; i <= 2030; i++) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = i;
+            yearSelect.appendChild(option);
+        }
+
+        function updateCalendar() {
+            const selectedMonth = parseInt(monthSelect.value);
+            const selectedYear = parseInt(yearSelect.value);
+            currentDate.setMonth(selectedMonth);
+            currentDate.setFullYear(selectedYear);
+            renderCalendar();
+            renderComments(selectedMonth, selectedYear);
+        }
+
+        monthSelect.addEventListener("change", updateCalendar);
+        yearSelect.addEventListener("change", updateCalendar);
+        brandSelect.addEventListener("change", updateCalendar);
+
+        function renderCalendar() {
+            const monthLabel = document.getElementById("monthLabel");
+            const daysContainer = document.getElementById("days");
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+
+            // Atualiza o rótulo do mês
+            monthLabel.textContent = `${monthNames[month]} ${year}`;
+
+            // Atualiza os valores dos dropdowns
+            monthSelect.value = month;
+            yearSelect.value = year;
+
+            // Limpa os dias anteriores
+            daysContainer.innerHTML = '';
+
+            // Primeiro dia do mês
+            const firstDay = new Date(year, month, 1).getDay();
+
+            // Dias no mês
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const selectedBrand = brandSelect.value;
+
+            // Adiciona células vazias para os dias anteriores ao primeiro dia
+            let row = document.createElement("div");
+            row.className = "row no-gutters";
+            for (let i = 0; i < firstDay; i++) {
+                let emptyCol = document.createElement("div");
+                emptyCol.className = "col day-col empty-col";
+                row.appendChild(emptyCol);
+            }
+
+            // Adiciona os dias
+            for (let day = 1; day <= daysInMonth; day++) {
+                if (row.children.length === 7) {
+                    daysContainer.appendChild(row);
+                    row = document.createElement("div");
+                    row.className = "row no-gutters";
+                }
+
+                let dayCol = document.createElement("div");
+                dayCol.className = "col day-col";
+                dayCol.style.position = "relative";
+
+                // Conteúdo do dia
+                dayCol.innerHTML = `<span class="day-number">${day}</span>`;
+
+                // Destaca o dia atual
+                const today = new Date();
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayCol.classList.add("bg-warning");
+                }
+
+                // Verifica se há campanhas neste dia
+                let campaignsOnDay = campaignsData.filter(campaign => {
+                    if (selectedBrand === "all" || campaign.brand.includes(selectedBrand)) {
+                        const campaignDates = parseDates(campaign.dataCampanha);
+                        return campaignDates.some(campaignDate => campaignDate.getDate() === day && campaignDate.getMonth() === month && campaignDate.getFullYear() === year);
+                    }
+                    return false;
+                });
+
+                if (campaignsOnDay.length > 0) {
+                    let brandsOnDay = [...new Set(campaignsOnDay.map(c => c.brand))];
+
+                    if (brandsOnDay.length === 1) {
+                        // Uma única marca
+                        let brand = brandsOnDay[0];
+                        let color = campaignsOnDay[0].color; // Todas as campanhas têm a mesma cor
+                        dayCol.style.backgroundColor = color;
+                        dayCol.style.color = "white";
+
+                        // Abreviação da marca
+                        let brandAbbr = brand.substring(0, 3).toUpperCase();
+
+                        // Adiciona os nomes das campanhas com links
+                        let campaignNamesHtml = campaignsOnDay.map(c => {
+                            return `<div class="campaign-name">
+                                <a href="#${c.id}" class="campaign-link" data-campaign-id="${c.id}" style="color: white; text-decoration: none;">(${brandAbbr}) ${c.name}</a>
+                            </div>`;
+                        }).join('');
+                        dayCol.innerHTML += campaignNamesHtml;
+
+                    } else if (brandsOnDay.length === 2) {
+                        // Duas marcas diferentes
+                        let brand1 = brandsOnDay[0];
+                        let brand2 = brandsOnDay[1];
+
+                        let color1 = campaignsOnDay.find(c => c.brand === brand1).color;
+                        let color2 = campaignsOnDay.find(c => c.brand === brand2).color;
+
+                        // Abreviações das marcas
+                        let brandAbbr1 = brand1.substring(0, 3).toUpperCase();
+                        let brandAbbr2 = brand2.substring(0, 3).toUpperCase();
+
+                        // Cria dois elementos para dividir o quadrado horizontalmente
+                        let topHalf = document.createElement("div");
+                        topHalf.style.width = "100%";
+                        topHalf.style.height = "50%";
+                        topHalf.style.backgroundColor = color1;
+                        topHalf.style.color = "white";
+                        topHalf.style.boxSizing = "border-box";
+                        topHalf.style.paddingLeft = "5px";
+                        topHalf.style.position = "relative";
+
+                        let bottomHalf = document.createElement("div");
+                        bottomHalf.style.width = "100%";
+                        bottomHalf.style.height = "50%";
+                        bottomHalf.style.backgroundColor = color2;
+                        bottomHalf.style.color = "white";
+                        bottomHalf.style.boxSizing = "border-box";
+                        bottomHalf.style.paddingLeft = "5px";
+                        bottomHalf.style.position = "relative";
+
+                        // Adiciona as campanhas da marca 1
+                        let campaignsBrand1 = campaignsOnDay.filter(c => c.brand === brand1);
+                        campaignsBrand1.forEach(c => {
+                            let campaignNameDiv = document.createElement("div");
+                            campaignNameDiv.className = "campaign-name";
+                            campaignNameDiv.innerHTML = `<a href="#${c.id}" class="campaign-link" data-campaign-id="${c.id}" style="color: white; text-decoration: none;">(${brandAbbr1}) ${c.name}</a>`;
+                            topHalf.appendChild(campaignNameDiv);
+                        });
+
+                        // Adiciona as campanhas da marca 2
+                        let campaignsBrand2 = campaignsOnDay.filter(c => c.brand === brand2);
+                        campaignsBrand2.forEach(c => {
+                            let campaignNameDiv = document.createElement("div");
+                            campaignNameDiv.className = "campaign-name";
+                            campaignNameDiv.innerHTML = `<a href="#${c.id}" class="campaign-link" data-campaign-id="${c.id}" style="color: white; text-decoration: none;">(${brandAbbr2}) ${c.name}</a>`;
+                            bottomHalf.appendChild(campaignNameDiv);
+                        });
+
+                        // Limpa o conteúdo do dia e adiciona as metades
+                        dayCol.innerHTML = `<span class="day-number">${day}</span>`;
+                        dayCol.appendChild(topHalf);
+                        dayCol.appendChild(bottomHalf);
+                    } else {
+                        // Mais de duas marcas - pode ser tratado conforme necessário
+                        dayCol.style.backgroundColor = "#555";
+                        dayCol.style.color = "white";
+                        dayCol.innerHTML += `<div class="campaign-name">Várias campanhas</div>`;
+                    }
+                }
+
+                row.appendChild(dayCol);
+            }
+
+            // Completa a última semana com células vazias, se necessário
+            while (row.children.length < 7) {
+                let emptyCol = document.createElement("div");
+                emptyCol.className = "col day-col empty-col";
+                row.appendChild(emptyCol);
+            }
+            daysContainer.appendChild(row);
+
+            // Adiciona eventos aos links das campanhas
+            document.querySelectorAll('.campaign-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    let campaignId = this.dataset.campaignId;
+                    let campaignElement = document.getElementById(campaignId);
+
+                    // Expande o item do accordion
+                    let collapseElement = campaignElement.querySelector('.accordion-collapse');
+                    let bsCollapse = new bootstrap.Collapse(collapseElement, {
+                        toggle: false
+                    });
+                    bsCollapse.show();
+
+                    // Rola até o elemento
+                    campaignElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        }
+
+        function renderComments(month, year) {
+            const campaignsList = document.getElementById("campaigns-list");
+            campaignsList.innerHTML = ''; // Limpa as campanhas anteriores
+
+            const selectedBrand = brandSelect.value;
+            let campaignsToShow = campaignsData.filter(campaign => {
+                // Verifica se a campanha é da marca selecionada ou se todas as marcas estão selecionadas
+                if (selectedBrand === "all" || campaign.brand.includes(selectedBrand)) {
+                    const campaignDates = parseDates(campaign.dataCampanha);
+                    return campaignDates.some(campaignDate => campaignDate.getMonth() === month && campaignDate.getFullYear() === year);
+                }
+                return false;
+            });
+
+            // Ordena as campanhas por data
+            campaignsToShow.sort((a, b) => {
+                const datesA = parseDates(a.dataCampanha);
+                const datesB = parseDates(b.dataCampanha);
+                const dateA = datesA[0];
+                const dateB = datesB[0];
+                if (dateA && dateB) {
+                    return dateA - dateB;
+                } else {
+                    return 0;
+                }
+            });
+
+            // Se não houver campanhas no mês selecionado
+            if (campaignsToShow.length === 0) {
+                campaignsList.innerHTML = '<div class="text-center">Nenhuma campanha neste mês.</div>';
+                return;
+            }
+
+            // Exibe as campanhas em um accordion
+            campaignsToShow.forEach((campaign, index) => {
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+                accordionItem.id = campaign.id;
+
+                // Cor de fundo mais clara baseada na marca
+                const lightColor = campaign.lightColor;
+
+                accordionItem.innerHTML = `
+                    <h2 class="accordion-header" id="heading-${campaign.id}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${campaign.id}" aria-expanded="false" aria-controls="collapse-${campaign.id}">
+                            ${campaign.name}
+                        </button>
+                    </h2>
+                    <div id="collapse-${campaign.id}" class="accordion-collapse collapse" aria-labelledby="heading-${campaign.id}" data-bs-parent="#campaigns-list">
+                        <div class="accordion-body campaign-box" style="background-color: ${lightColor};">
+                            <strong>Data da Campanha:</strong> ${campaign.dataCampanha}<br>
+                            <strong>Desconto:</strong> ${campaign.discount}<br>
+                            <strong>Rotas:</strong> ${campaign.routes}<br>
+                            <strong>Período de vendas:</strong> ${campaign.salesPeriod}<br>
+                            <strong>Período de viagens:</strong> ${campaign.travelPeriod}<br>
+                            <strong>Nome do cupom:</strong> ${campaign.coupon}<br>
+                            <strong>Marca:</strong> ${campaign.brand}<br>
+                            ${campaign.type ? `<strong>Tipo de campanha:</strong> ${campaign.type}<br>` : ''}
+                            <strong>Peculiaridade:</strong> ${campaign.peculiarity}<br>
+                            <strong>Receita:</strong> ${campaign.revenue}<br>
+                            <strong>Agência:</strong> ${campaign.agency}<br>
+                            <strong>KPIS CRM:</strong> ${campaign.kpis}
+                        </div>
+                    </div>
+                `;
+
+                campaignsList.appendChild(accordionItem);
+            });
+        }
+
+        document.getElementById("prev").addEventListener("click", () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+            renderComments(currentDate.getMonth(), currentDate.getFullYear());
+        });
+
+        document.getElementById("next").addEventListener("click", () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+            renderComments(currentDate.getMonth(), currentDate.getFullYear());
+        });
+
+        // Inicializa o calendário
+        renderCalendar();
+        renderComments(currentDate.getMonth(), currentDate.getFullYear());
+    </script>
+</body>
+
+</html>
